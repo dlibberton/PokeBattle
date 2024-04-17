@@ -13,9 +13,9 @@ import logging
 from random import choice
 from user_app.models import User
 from django.db import transaction
+from pokebattle_proj.settings import env
 
 logger = logging.getLogger(__name__)
-
 
 class ShopPageView(APIView):
     def get_random_location(self):
@@ -26,8 +26,7 @@ class ShopPageView(APIView):
 
     def get_weather(self, latitude, longitude):
         # Make a request to the weather API with random latitude and longitude
-        api_key = "df2c312635c8474faf1202027241404"
-        url = f'http://api.weatherapi.com/v1/current.json?key={api_key}&q={latitude},{longitude}'  
+        url = f'http://api.weatherapi.com/v1/current.json?key={env.get("api_key")}&q={latitude},{longitude}'  
         response = requests.get(url)
 
         if response.status_code == 200:
