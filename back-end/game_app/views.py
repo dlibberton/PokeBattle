@@ -3,8 +3,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
-from .models import Pokemon, Modifier, Weather, Deck, Game, Boss, create_game_stats, GameStats
-from .serializers import PokemonSerializer, ModifierSerializer, WeatherSerializer, BossSerializer
+from .models import Pokemon, Modifier, Weather, Deck, Game, Boss, handle_game_result, GameStats
+from .serializers import PokemonSerializer, ModifierSerializer, WeatherSerializer, BossSerializer, DeckSerializer
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
@@ -12,6 +12,7 @@ import random
 import logging
 from random import choice
 from user_app.models import User
+from django.db import transaction
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +47,15 @@ class ShopPageView(APIView):
         if not request.user.is_authenticated:
             return Response({"error": "Authentication required."}, status=status.HTTP_401_UNAUTHORIZED)
 
+        # Get existing game for the user if it exists
+        try:
+            game = Game.objects.get(user=request.user)
+            user_deck = game.user.deck
+            game.delete()  # Delete the existing game
+            user_deck.delete()
+        except Game.DoesNotExist:
+            pass  # No existing game, proceed to create a new one
+
         # Get available Pokemon and Modifiers
         available_pokemon = Pokemon.objects.all()
         available_modifiers = Modifier.objects.all()
@@ -77,8 +87,8 @@ class ShopPageView(APIView):
                 weather_conditions=weather_conditions
             )
             logger.info("Weather object created successfully.")
-            # Create Game object and associate with user
-             # Get random boss instances
+
+            # Get random boss instances
             random_bosses = self.get_random_bosses()
 
             # Serialize random boss instances
@@ -86,10 +96,11 @@ class ShopPageView(APIView):
 
             # Create Game object and associate with user and bosses
             game = Game.objects.create(
-            user=request.user,
-            weather=weather
+                user=request.user,
+                weather=weather
             )
             game.bosses.add(*random_bosses)
+            game.save()
             logger.info("Game object created successfully.")
 
             # Create JSON response
@@ -178,6 +189,7 @@ class ShopPageView(APIView):
         except Modifier.DoesNotExist:
             return JsonResponse({'error': 'Modifier not found'}, status=404)
 
+
     def handle_loss(self, data):
         try:
             # Parse the JSON data
@@ -190,8 +202,12 @@ class ShopPageView(APIView):
             game.winner = False
             game.save()
 
-            # Create GameStats for the lost game
-            create_game_stats(game)
+            # Retrieve the user's deck
+            user_deck = game.user.deck
+
+            # Handle the game result to create GameStats
+            with transaction.atomic(): 
+                handle_game_result(game, user_deck)
 
             return JsonResponse({'message': 'Game lost, GameStats created'}, status=200)
 
@@ -200,6 +216,7 @@ class ShopPageView(APIView):
         except Game.DoesNotExist:
             return JsonResponse({'error': 'Game not found'}, status=404)
         
+            
 class StatsPageView(APIView):
     def get(self, request):
         # Check if user is authenticated
@@ -214,9 +231,15 @@ class StatsPageView(APIView):
             game_stats_data = {
                 "game_id": game_stats.game_id,
                 "users_deck_id": game_stats.users_deck_id,
+                "boss_name": game_stats.boss_name,
                 "modifiers": [modifier.id for modifier in game_stats.modifiers.all()],
-                "weather_id": game_stats.weather_id,
-                "boss_name": game_stats.boss_name
+                "pokemons": [pokemon.id for pokemon in game_stats.pokemons.all()],
+                "weather": {
+                    "location": game_stats.weather.location,
+                    "temperature": game_stats.weather.temperature,
+                    "humidity": game_stats.weather.humidity,
+                    "weather_conditions": game_stats.weather.weather_conditions
+                }
             }
 
             return Response(game_stats_data, status=status.HTTP_200_OK)
@@ -231,36 +254,34 @@ class BattlePageView(APIView):
             return Response({"error": "Authentication required."}, status=status.HTTP_401_UNAUTHORIZED)
 
         try:
-            # Retrieve the user
-            user = request.user
+            # Retrieve the user's game if it exists
+            game = Game.objects.get(user=request.user)
+            user_deck = game.user.deck
 
-            # Retrieve the user's deck and associated modifiers
-            users_deck = user.deck
-            modifiers = users_deck.modifiers.all()
+            # Retrieve all Pokemon and modifiers in the user's deck
+            user_pokemon = user_deck.pokemons.all()
+            user_modifier = user_deck.modifiers.all()
 
-            # Retrieve the game associated with the user
-            game = user.game
+            # Serialize the user's deck, pokemons, and modifiers
+            deck_serializer = DeckSerializer(user_deck)
+            pokemon_serializer = PokemonSerializer(user_pokemon, many=True)
+            modifier_serializer = ModifierSerializer(user_modifier, many=True)
 
-            # Retrieve all bosses for the game
-            bosses = [game.boss1, game.boss2, game.boss3]
+            # Serialize the weather attached to the game model
+            weather_serializer = WeatherSerializer(game.weather)
 
-            # Choose a random boss from the available bosses
-            random_boss = choice(bosses)
+            # Serialize the bosses attached to the game model
+            boss_serializer = BossSerializer(game.bosses.all(), many=True)
 
-            # Retrieve the weather for the game
-            weather = game.weather
-
-            # Return the data
+            # Create JSON response
             data = {
-                "users_deck_id": users_deck.id,
-                "modifiers": [modifier.id for modifier in modifiers],
-                "random_boss_name": random_boss.name,
-                "weather_id": weather.id
+                "user_deck": deck_serializer.data,
+                "user_pokemon": pokemon_serializer.data,
+                "user_modifier": modifier_serializer.data,
+                "weather": weather_serializer.data,
+                "bosses": boss_serializer.data
             }
 
-            return Response(data, status=status.HTTP_200_OK)
-
-        except User.DoesNotExist:
-            return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
-        except AttributeError:
-            return Response({"error": "User's deck or game not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(data)
+        except Game.DoesNotExist:
+            return Response({"error": "No active game found."}, status=status.HTTP_404_NOT_FOUND)

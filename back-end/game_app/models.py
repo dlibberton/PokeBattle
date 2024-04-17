@@ -54,33 +54,39 @@ class Game(models.Model):
 class GameStats(models.Model):
     game = models.OneToOneField(Game, on_delete=models.CASCADE)
     users_deck = models.OneToOneField(Deck, on_delete=models.CASCADE)
-    modifier = models.OneToOneField(Modifier, on_delete=models.CASCADE)
     weather = models.OneToOneField(Weather, on_delete=models.CASCADE)
     boss_name = models.CharField(max_length=100)
+    pokemons = models.ManyToManyField(Pokemon, related_name='game_stats', blank=True)
+    modifiers = models.ManyToManyField(Modifier, related_name='game_stats', blank=True)
     
-@receiver(post_save, sender=Game)
-def create_game_stats(sender, instance, created, **kwargs):
-    if not created and instance.winner == False:
-        # If winner is False, create a GameStats object
-
-        # Get the user's deck
-        user_deck = instance.user.deck
-
-        # Get all modifiers associated with the user's deck
-        deck_modifiers = user_deck.modifiers.all()
-
+    def add_pokemon(self, pokemon):
+        self.pokemons.add(pokemon)
+        
+    
+def handle_game_result(game, user_deck):
         # Get the last boss associated with the game
-        last_boss = instance.boss
+        last_boss = game.bosses.last()
 
-        # Create GameStats object and associate modifiers
+        # Create GameStats object
         game_stats = GameStats.objects.create(
-            game=instance,
+            game=game,
             users_deck=user_deck,
-            weather=instance.weather,
+            weather=game.weather,
             boss_name=last_boss.name
         )
-        
-        # Add all modifiers associated with the user's deck to GameStats
-        game_stats.modifiers.add(*deck_modifiers)
 
-        game_stats.save()
+            # Retrieve all pokemons associated with the user's deck
+        user_pokemons = user_deck.pokemons.all()
+        print(user_pokemons)
+        #game_stats.pokemons.add(*user_pokemons)
+        #print("added pokemon", game_stats.pokemons.all())
+        #print(game_stats.pokemons.all())
+        for pokemon in user_pokemons:
+           game_stats.add_pokemon(pokemon)
+
+        # Retrieve all modifiers associated with the user's deck
+        user_modifiers = user_deck.modifiers.all()
+        for modifier in user_modifiers:
+            game_stats.modifiers.add(modifier)
+            game_stats.save()
+
