@@ -64,7 +64,6 @@ class GameStats(models.Model):
         
     
 def handle_game_result(game, user_deck):
-        # Get the last boss associated with the game
         last_boss = game.bosses.last()
 
         # Create GameStats object
@@ -75,16 +74,12 @@ def handle_game_result(game, user_deck):
             boss_name=last_boss.name
         )
 
-            # Retrieve all pokemons associated with the user's deck
         user_pokemons = user_deck.pokemons.all()
         print(user_pokemons)
-        #game_stats.pokemons.add(*user_pokemons)
-        #print("added pokemon", game_stats.pokemons.all())
-        #print(game_stats.pokemons.all())
+
         for pokemon in user_pokemons:
            game_stats.add_pokemon(pokemon)
 
-        # Retrieve all modifiers associated with the user's deck
         user_modifiers = user_deck.modifiers.all()
         for modifier in user_modifiers:
             game_stats.modifiers.add(modifier)
