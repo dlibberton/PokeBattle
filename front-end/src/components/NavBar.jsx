@@ -26,6 +26,12 @@ function NavBar({ setUser, user }) {
 								<Nav.Link as={Link} to="/home/">
 									Home
 								</Nav.Link>
+								<Nav.Link as={Link} to="/tutorial/">
+									Tutorial
+								</Nav.Link>
+								<Nav.Link as={Link} to="/shop/">
+									Battle!
+								</Nav.Link>
 								<Button
 									variant="outline-danger"
 									onClick={async () => setUser(await userLogOut())}

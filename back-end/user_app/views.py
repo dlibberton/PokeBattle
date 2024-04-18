@@ -3,7 +3,10 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from .serializers import UserSerializer
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, logout
+from rest_framework.status import (
+    HTTP_204_NO_CONTENT,
+)
 
 class UserLoginOrCreateView(APIView):
     def post(self, request):
@@ -26,3 +29,9 @@ class UserLoginOrCreateView(APIView):
         
     def get(self, request):
         return Response({"user":request.user.email})
+    
+class LogOut(APIView):
+    def post(self, request):
+        request.user.auth_token.delete()
+        logout(request)
+        return Response(status=HTTP_204_NO_CONTENT)

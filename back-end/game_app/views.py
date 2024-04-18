@@ -49,8 +49,8 @@ class ShopPageView(APIView):
         # Get existing game for the user if it exists
         try:
             game = Game.objects.get(user=request.user)
-            user_deck = game.user.deck
             game.delete()  # Delete the existing game
+            user_deck = game.user.deck
             user_deck.delete()
         except Game.DoesNotExist:
             pass  # No existing game, proceed to create a new one

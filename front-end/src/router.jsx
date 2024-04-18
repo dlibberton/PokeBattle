@@ -4,6 +4,8 @@ import LogIn from './pages/LogIn';
 import NotFoundPage from './pages/NotFoundPage';
 import HomePage from './pages/HomePage';
 import ErrorPage from './pages/ErrorPage';
+import TutorialPage from './pages/TutorialPage';
+import ShopPage from './pages/ShopPage';
 import { userConfirmation } from './utilities';
 
 const router = createBrowserRouter([
@@ -20,6 +22,14 @@ const router = createBrowserRouter([
 			{
 				path: '/home/',
 				element: <HomePage />,
+			},
+			{
+				path: '/tutorial/',
+				element: <TutorialPage />,
+			},
+			{
+				path: '/shop',
+				element: <ShopPage />,
 			},
 			{
 				path: '*',

@@ -33,11 +33,43 @@ export const userConfirmation = async () => {
 };
 
 export const userLogOut = async () => {
-	let response = await api.post('users/logout/');
+	let response = await api.post('login/users/logout/');
 	if (response.status === 204) {
 		localStorage.removeItem('token');
 		delete api.defaults.headers.common['Authorization'];
 		return null;
 	}
 	alert('Something went wrong and logout failed');
+};
+
+export const GenerateGame = async () => {
+	try {
+		const response = await api.get('game/shop');
+		// Return the response data
+		return response.data;
+	} catch (error) {
+		// Handle errors
+		console.error('Error fetching game data:', error);
+		throw error;
+	}
+};
+
+export const updateUserDeck = async (userID, pokemonId) => {
+	try {
+		const requestData = {
+			pokemon_id: pokemonId,
+			user_id: userID,
+			deck_id: 1,
+		};
+		const response = await api.put('game/shop/', requestData);
+		if (response.status === 200) {
+			console.log('Pokemon added to deck successfully');
+		} else {
+			console.error('Unexpected status code:', response.status);
+		}
+	} catch (error) {
+		// Handle errors
+		console.error('Error updating user deck:', error);
+		throw error;
+	}
 };

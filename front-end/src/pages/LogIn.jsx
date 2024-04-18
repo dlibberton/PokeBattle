@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useNavigate } from 'react-router-dom';
 import { userLogIn } from '../utilities';
 
 const LogIn = () => {
@@ -16,6 +16,7 @@ const LogIn = () => {
 				onSubmit={async (e) => [
 					e.preventDefault(),
 					setUser(await userLogIn(email, password)),
+					window.location.reload(),
 				]}
 			>
 				<Form.Group className="mb-3" controlId="formBasicEmail">

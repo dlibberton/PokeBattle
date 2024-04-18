@@ -14,10 +14,10 @@ function App() {
 	const navigate = useNavigate();
 
 	useEffect(() => {
-		let nullUserUrls = ['/login/'];
+		let nullUserUrls = ['/'];
 		let isAllowed = nullUserUrls.includes(location.pathname);
-		if (user && isAllowed) {
-			navigate('home/');
+		if (user && location.pathname === '/') {
+			navigate('/home/');
 		} else if (!user && !isAllowed) {
 			navigate('/');
 		}
