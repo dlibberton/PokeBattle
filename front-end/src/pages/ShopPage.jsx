@@ -8,6 +8,7 @@ const ShopPage = () => {
 	const [gameData, setGameData] = useState(null);
 	const [randomPokemon, setRandomPokemon] = useState([]);
 	const [userDeck, setUserDeck] = useState([]);
+	const [deckPokemon, setDeckPokemon] = useState([]);
 
 	useEffect(() => {
 		// Call the fetchGameData function when the component mounts
@@ -46,6 +47,7 @@ const ShopPage = () => {
 		if (userDeck.length < 3) {
 			const updatedDeck = [...userDeck, pokemon];
 			setUserDeck(updatedDeck);
+			setDeckPokemon([...deckPokemon, pokemon]);
 			updateUserDeck(userID, pokemon.id);
 		}
 	};
@@ -55,13 +57,37 @@ const ShopPage = () => {
 	}
 	return (
 		<div>
+			{/* Weather card */}
+			<Card style={{ width: '18rem', margin: '15px' }}>
+				<Card.Body>
+					<Card.Title>Weather Information</Card.Title>
+					<Card.Text>Location: {gameData.weather.location}</Card.Text>
+					<Card.Text>
+						Weather Conditions: {gameData.weather.weather_conditions}
+					</Card.Text>
+					<Card.Img
+						variant="bottom"
+						src={`https://example.com/weather_images/${gameData.weather.weather_conditions}.png`}
+						alt={gameData.weather.weather_conditions}
+					/>
+				</Card.Body>
+			</Card>
+
+			{/*Pokemon Card*/}
 			<div className="row">
 				{randomPokemon.map((pokemon, index) => (
 					<div key={index} className="col-md-4 mb-4">
-						<Card>
+						<Card
+							border={deckPokemon.includes(pokemon) ? 'success' : 'primary'}
+							style={{ marginBottom: '15px' }}
+						>
 							<Card.Img
 								variant="top"
-								src={`path_to_your_pokemon_images/${pokemon.name}.png`}
+								src={
+									deckPokemon.includes(pokemon)
+										? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/${pokemon.id}.gif`
+										: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`
+								}
 								alt={pokemon.name}
 							/>
 							<Card.Body>

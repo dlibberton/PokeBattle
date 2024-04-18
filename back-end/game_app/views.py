@@ -42,7 +42,6 @@ class ShopPageView(APIView):
         return all_bosses[:3]
 
     def get(self, request):
-        # Check if user is authenticated
         if not request.user.is_authenticated:
             return Response({"error": "Authentication required."}, status=status.HTTP_401_UNAUTHORIZED)
 
@@ -55,7 +54,6 @@ class ShopPageView(APIView):
         except Game.DoesNotExist:
             pass  # No existing game, proceed to create a new one
 
-        # Get available Pokemon and Modifiers
         available_pokemon = Pokemon.objects.all()
         available_modifiers = Modifier.objects.all()
 
@@ -71,14 +69,12 @@ class ShopPageView(APIView):
         weather_data = self.get_weather(latitude, longitude)
 
         if weather_data is not None:
-            # Extract relevant weather information
             location = weather_data['location']['name']
             temperature = weather_data['current']['temp_c']
             humidity = weather_data['current']['humidity']
             weather_conditions = weather_data['current']['condition']['text']
             logger.info(f"Weather information fetched successfully: location={location}, temperature={temperature}, humidity={humidity}, conditions={weather_conditions}")
 
-            # Create Weather object
             weather = Weather.objects.create(
                 location=location,
                 temperature=temperature,
