@@ -11,11 +11,10 @@ const ShopPage = () => {
 	const [deckPokemon, setDeckPokemon] = useState([]);
 
 	useEffect(() => {
-		// Call the fetchGameData function when the component mounts
 		const fetchData = async () => {
 			try {
 				const data = await GenerateGame();
-				setGameData(data); // Store the fetched data in state
+				setGameData(data);
 			} catch (error) {
 				console.error('Error fetching game data:', error);
 			}
@@ -28,7 +27,7 @@ const ShopPage = () => {
 		return Math.floor(Math.random() * (max - min + 1)) + min;
 	};
 
-	//random Pokémon from available Pokémon data
+	//random Pokémon
 	useEffect(() => {
 		if (gameData && gameData.available_pokemon) {
 			const randomPokemonArray = [];

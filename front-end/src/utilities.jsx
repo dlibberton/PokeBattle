@@ -45,10 +45,8 @@ export const userLogOut = async () => {
 export const GenerateGame = async () => {
 	try {
 		const response = await api.get('game/shop');
-		// Return the response data
 		return response.data;
 	} catch (error) {
-		// Handle errors
 		console.error('Error fetching game data:', error);
 		throw error;
 	}
@@ -68,7 +66,6 @@ export const updateUserDeck = async (userID, pokemonId) => {
 			console.error('Unexpected status code:', response.status);
 		}
 	} catch (error) {
-		// Handle errors
 		console.error('Error updating user deck:', error);
 		throw error;
 	}
